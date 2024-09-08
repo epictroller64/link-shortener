@@ -7,6 +7,7 @@ import (
 
 type Link struct {
 	ID        int       `json:"id,omitempty"`
+	ShortId   string    `json:"shortId"`
 	Original  string    `json:"original"`
 	Short     string    `json:"short,omitempty"`
 	CreatedAt time.Time `json:"createdAt,omitempty"`
@@ -17,9 +18,9 @@ type Link struct {
 // CreateLink creates a new link in the database
 func CreateLink(link Link) (Link, error) {
 	query := `
-		INSERT INTO links (original, short, created_at, created_by, clicks)
-		VALUES ($1, $2, $3, $4, 0)
-		RETURNING id, original, short, created_at, created_by, clicks
+		INSERT INTO links (original, short, created_at, created_by, clicks, short_id)
+		VALUES ($1, $2, $3, $4, 0, $5)
+		RETURNING id, original, short, created_at, created_by, clicks, short_id
 	`
 
 	err := Db.QueryRow(
@@ -29,6 +30,7 @@ func CreateLink(link Link) (Link, error) {
 		link.Short,
 		link.CreatedAt,
 		link.CreatedBy,
+		link.ShortId,
 	).Scan(
 		&link.ID,
 		&link.Original,
@@ -36,6 +38,32 @@ func CreateLink(link Link) (Link, error) {
 		&link.CreatedAt,
 		&link.CreatedBy,
 		&link.Clicks,
+		&link.ShortId,
+	)
+
+	if err != nil {
+		return Link{}, err
+	}
+
+	return link, nil
+}
+
+func GetLinkByShortId(shortId string) (Link, error) {
+	query := `
+		SELECT id, original, short, created_at, created_by, clicks, short_id
+		FROM links
+		WHERE short_id = $1
+	`
+
+	var link Link
+	err := Db.QueryRow(context.Background(), query, shortId).Scan(
+		&link.ID,
+		&link.Original,
+		&link.Short,
+		&link.CreatedAt,
+		&link.CreatedBy,
+		&link.Clicks,
+		&link.ShortId,
 	)
 
 	if err != nil {
@@ -47,7 +75,7 @@ func CreateLink(link Link) (Link, error) {
 
 func GetLink(id string) (Link, error) {
 	query := `
-		SELECT id, original, short, created_at, created_by, clicks
+		SELECT id, original, short, created_at, created_by, clicks, short_id
 		FROM links
 		WHERE id = $1
 	`
@@ -60,6 +88,7 @@ func GetLink(id string) (Link, error) {
 		&link.CreatedAt,
 		&link.CreatedBy,
 		&link.Clicks,
+		&link.ShortId,
 	)
 
 	if err != nil {
@@ -71,8 +100,8 @@ func GetLink(id string) (Link, error) {
 
 func GetAllLinks() ([]Link, error) {
 	query := `
-		SELECT id, original, short, created_at, created_by, clicks
-		FROM links
+		SELECT id, original, short, created_at, created_by, clicks, short_id
+		FROM links ORDER BY id DESC
 	`
 
 	var links []Link = make([]Link, 0)
@@ -91,6 +120,7 @@ func GetAllLinks() ([]Link, error) {
 			&link.CreatedAt,
 			&link.CreatedBy,
 			&link.Clicks,
+			&link.ShortId,
 		)
 		if err != nil {
 			return links, err
@@ -104,7 +134,7 @@ func GetAllLinks() ([]Link, error) {
 // GetClicks gets all clicks for a link
 func GetClicks(linkId string) ([]Click, error) {
 	query := `
-		SELECT id, link_id, created_at
+		SELECT id, link_id, created_at, user_agent, referer, ip, country
 		FROM clicks
 		WHERE link_id = $1
 	`
@@ -122,6 +152,10 @@ func GetClicks(linkId string) ([]Click, error) {
 			&click.ID,
 			&click.LinkID,
 			&click.CreatedAt,
+			&click.UserAgent,
+			&click.Referer,
+			&click.IP,
+			&click.Country,
 		)
 		if err != nil {
 			return []Click{}, err

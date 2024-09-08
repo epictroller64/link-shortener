@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"link-shortener-backend/src/repository"
+	"math/rand"
 	"net/http"
 	"time"
 
@@ -12,11 +13,15 @@ import (
 // TODO: Overwrite the link creation details with server info
 // CreateLink creates a new link
 func CreateLink(c *gin.Context) {
+	domain := "http://localhost:8080/" // TODO: Change to env variable later or whatever
+	shortLink := GenerateShortLink()
 	body := repository.Link{}
 	c.BindJSON(&body)
 	body.CreatedAt = time.Now()
 	body.CreatedBy = "test"
-	body.Short = "https://short.com/"
+	body.Short = domain + shortLink
+	body.ShortId = shortLink
+	body.Clicks = 0
 	link, err := repository.CreateLink(body)
 	if err != nil {
 		fmt.Println(err)
@@ -42,6 +47,7 @@ func CreateClick(c *gin.Context) {
 func GetLink(c *gin.Context) {
 	link, err := repository.GetLink(c.Param("id"))
 	if err != nil {
+		fmt.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -51,9 +57,22 @@ func GetLink(c *gin.Context) {
 func GetAllLinks(c *gin.Context) {
 	links, err := repository.GetAllLinks()
 	if err != nil {
+		fmt.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	fmt.Println(links)
 	c.JSON(http.StatusOK, links)
+}
+
+func GenerateShortLink() string {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	const length = 6
+
+	shortLink := make([]byte, length)
+	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
+	for i := range shortLink {
+		shortLink[i] = charset[rand.Intn(len(charset))]
+	}
+
+	return string(shortLink)
 }

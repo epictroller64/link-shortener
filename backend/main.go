@@ -26,6 +26,9 @@ func main() {
 	router.DELETE("/redirects/delete/:redirectID", handlers.DeleteRedirect)
 	router.PUT("/redirects/update/:redirectID", handlers.UpdateRedirect)
 
+	// This handles everything related to the shortened link
+	router.GET("/:shortId", handlers.Redirect)
+
 	repository.InitDatabase()
 	router.Run(":8080")
 }
