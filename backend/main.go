@@ -34,6 +34,7 @@ func main() {
 
 	privateGroup.POST("/analytics/get", handlers.GetStatistics)
 	privateGroup.POST("/analytics/daily", handlers.GetDailyStatistics)
+	privateGroup.POST("/analytics/device", handlers.GetDeviceStatistics)
 	// This handles everything related to the shortened link
 	router.GET("/:shortId", handlers.Redirect)
 

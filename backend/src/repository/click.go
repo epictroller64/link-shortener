@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/mssola/useragent"
 )
 
 // TrackClick tracks a click on a link
@@ -91,6 +92,18 @@ type DailyStatistics struct {
 	Count int       `json:"count"`
 }
 
+type DeviceType string
+
+const (
+	DeviceTypeDesktop DeviceType = "desktop"
+	DeviceTypeMobile  DeviceType = "mobile"
+)
+
+type DeviceStatistics struct {
+	Device DeviceType `json:"device"`
+	Count  int        `json:"count"`
+}
+
 func GetDailyStatistics(userId string, startDate time.Time, endDate time.Time) ([]DailyStatistics, error) {
 	query := `
 		SELECT DATE(clicks.created_at) as date, COUNT(*) as count
@@ -156,4 +169,40 @@ func GetClicksByDateRange(linkId string, startDate time.Time, endDate time.Time)
 
 	return clicks, nil
 
+}
+
+func GetDeviceStatistics(userId string, linkId string, startDate time.Time, endDate time.Time) ([]DeviceStatistics, error) {
+	query := `SELECT user_agent FROM clicks WHERE link_id = $1 AND created_at BETWEEN $2 AND $3`
+
+	rows, err := Db.Query(context.Background(), query, linkId, startDate, endDate)
+	var deviceStatistics []DeviceStatistics = make([]DeviceStatistics, 0)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return deviceStatistics, nil
+		}
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var userAgent string
+		err := rows.Scan(&userAgent)
+		if err != nil {
+			return nil, err
+		}
+		device := parseUserAgent(userAgent)
+		deviceStatistics = append(deviceStatistics, DeviceStatistics{Device: device, Count: 1})
+	}
+
+	return deviceStatistics, nil
+}
+
+func parseUserAgent(userAgentString string) DeviceType {
+	ua := useragent.New(userAgentString)
+
+	if ua.Mobile() {
+		return DeviceTypeMobile
+	}
+
+	return DeviceTypeDesktop
 }

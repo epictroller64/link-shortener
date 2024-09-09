@@ -83,3 +83,35 @@ func GetStatistics(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, clicks)
 }
+
+func GetDeviceStatistics(c *gin.Context) {
+	user := c.MustGet("user").(*repository.User)
+	var request StatisticsRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	start, end, err := ParseDates(request.StartDate, request.EndDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	stats, err := repository.GetDeviceStatistics(user.ID, request.LinkId, start, end)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, stats)
+}
+
+func ParseDates(startDate string, endDate string) (time.Time, time.Time, error) {
+	start, err := time.Parse(time.RFC3339, startDate)
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
+	end, err := time.Parse(time.RFC3339, endDate)
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
+	return start, end, nil
+}
