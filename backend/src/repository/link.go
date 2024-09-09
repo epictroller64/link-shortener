@@ -131,41 +131,6 @@ func GetAllLinks() ([]Link, error) {
 	return links, nil
 }
 
-// GetClicks gets all clicks for a link
-func GetClicks(linkId string) ([]Click, error) {
-	query := `
-		SELECT id, link_id, created_at, user_agent, referer, ip, country
-		FROM clicks
-		WHERE link_id = $1
-	`
-
-	var clicks []Click
-	rows, err := Db.Query(context.Background(), query, linkId)
-	if err != nil {
-		return []Click{}, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var click Click
-		err := rows.Scan(
-			&click.ID,
-			&click.LinkID,
-			&click.CreatedAt,
-			&click.UserAgent,
-			&click.Referer,
-			&click.IP,
-			&click.Country,
-		)
-		if err != nil {
-			return []Click{}, err
-		}
-		clicks = append(clicks, click)
-	}
-
-	return clicks, nil
-}
-
 // UpdateLinkClickCount increments the click count for a specific link
 func UpdateLinkClickCount(linkID int) error {
 	query := `

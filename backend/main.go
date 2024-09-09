@@ -1,31 +1,38 @@
 package main
 
 import (
+	"fmt"
 	"link-shortener-backend/src/handlers"
 	"link-shortener-backend/src/repository"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("Error loading .env file")
+		return
+	}
 	router := gin.Default()
 
-	router.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "Hello, World!"})
-	})
+	router.POST("/api/auth/login", handlers.Login)
+	router.POST("/api/auth/register", handlers.Register)
 
-	router.POST("/links/create", handlers.CreateLink)
-	router.POST("/clicks/create", handlers.CreateClick)
-	router.GET("/links/get/:id", handlers.GetLink)
-	router.GET("/links/all", handlers.GetAllLinks)
+	privateGroup := router.Group("/api/")
+	privateGroup.Use(handlers.AuthMiddleware())
+	privateGroup.POST("/links/create", handlers.CreateLink)
+	privateGroup.POST("/clicks/create", handlers.CreateClick)
+	privateGroup.GET("/links/get/:id", handlers.GetLink)
+	privateGroup.GET("/links/all", handlers.GetAllLinks)
 
-	router.POST("/redirects/create", handlers.CreateRedirect)
-	router.GET("/redirects/get/:linkID", handlers.GetRedirectsByLinkID)
-	router.DELETE("/redirects/delete/:redirectID", handlers.DeleteRedirect)
-	router.PUT("/redirects/update/:redirectID", handlers.UpdateRedirect)
+	privateGroup.POST("/redirects/create", handlers.CreateRedirect)
+	privateGroup.GET("/redirects/get/:linkID", handlers.GetRedirectsByLinkID)
+	privateGroup.DELETE("/redirects/delete/:redirectID", handlers.DeleteRedirect)
+	privateGroup.PUT("/redirects/update/:redirectID", handlers.UpdateRedirect)
 
+	privateGroup.POST("/analytics/get", handlers.GetStatistics)
 	// This handles everything related to the shortened link
 	router.GET("/:shortId", handlers.Redirect)
 
