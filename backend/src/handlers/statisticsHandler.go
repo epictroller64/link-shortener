@@ -42,14 +42,18 @@ func GetDailyStatistics(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end date format"})
 		return
 	}
+	fmt.Println(startDate, endDate)
 	stats, err := repository.GetDailyStatistics(user.ID, startDate, endDate)
 	if err != nil {
 		fmt.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	fmt.Println(stats)
 	c.JSON(http.StatusOK, stats)
 }
+
+// GetStatistics returns the number of clicks for each day in the given date range. This is targeting specific link
 func GetStatistics(c *gin.Context) {
 	var request StatisticsRequest
 	if err := c.ShouldBindJSON(&request); err != nil {

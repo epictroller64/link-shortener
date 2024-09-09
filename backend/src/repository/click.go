@@ -96,7 +96,7 @@ func GetDailyStatistics(userId string, startDate time.Time, endDate time.Time) (
 		SELECT DATE(clicks.created_at) as date, COUNT(*) as count
 		FROM clicks
 		INNER JOIN links ON links.id = clicks.link_id
-		WHERE links.user_id = $1 AND clicks.created_at BETWEEN $2 AND $3
+		WHERE links.created_by = $1 AND clicks.created_at BETWEEN $2 AND $3
 		GROUP BY DATE(clicks.created_at)
 		ORDER BY date
 	`

@@ -13,12 +13,13 @@ import (
 // TODO: Overwrite the link creation details with server info
 // CreateLink creates a new link
 func CreateLink(c *gin.Context) {
+	user := c.MustGet("user").(*repository.User)
 	domain := "http://localhost:8080/" // TODO: Change to env variable later or whatever
 	shortLink := GenerateShortLink()
 	body := repository.Link{}
 	c.BindJSON(&body)
 	body.CreatedAt = time.Now()
-	body.CreatedBy = "test"
+	body.CreatedBy = user.ID
 	body.Short = domain + shortLink
 	body.ShortId = shortLink
 	body.Clicks = 0

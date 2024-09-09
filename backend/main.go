@@ -33,6 +33,7 @@ func main() {
 	privateGroup.PUT("/redirects/update/:redirectID", handlers.UpdateRedirect)
 
 	privateGroup.POST("/analytics/get", handlers.GetStatistics)
+	privateGroup.POST("/analytics/daily", handlers.GetDailyStatistics)
 	// This handles everything related to the shortened link
 	router.GET("/:shortId", handlers.Redirect)
 
