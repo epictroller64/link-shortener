@@ -43,6 +43,8 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/joho/godotenv v1.5.1
+	github.com/stripe/stripe-go v70.15.0+incompatible
+	github.com/stripe/stripe-go/v79 v79.10.0
 	golang.org/x/crypto v0.26.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 )

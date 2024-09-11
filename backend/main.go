@@ -36,6 +36,12 @@ func main() {
 	privateGroup.POST("/analytics/daily", handlers.GetDailyStatistics)
 	privateGroup.POST("/analytics/device", handlers.GetDeviceStatistics)
 	// This handles everything related to the shortened link
+	privateGroup.POST("/stripe/create-checkout-session", handlers.StripeCreateCheckoutSession)
+	privateGroup.GET("/stripe/success", handlers.StripeSuccess)
+	privateGroup.GET("/billing/get", handlers.GetBilling)
+	privateGroup.GET("/account/get", handlers.GetAccountDetails)
+	router.POST("/api/stripe/webhook", handlers.StripeWebHook)
+	router.GET("/api/stripe/sync", handlers.StripeSubscriptionSync)
 	router.GET("/:shortId", handlers.Redirect)
 
 	repository.InitDatabase()

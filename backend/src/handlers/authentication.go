@@ -122,6 +122,7 @@ func SetSessionCookie(c *gin.Context, token string) {
 func Login(c *gin.Context) {
 	var request LoginRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
+		fmt.Println(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -129,12 +130,14 @@ func Login(c *gin.Context) {
 	user, _ := repository.GetUserByEmail(request.Email)
 
 	if user == nil || !VerifyPassword(user.Password, request.Password) {
+		fmt.Println("Invalid credentials")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
 
 	token, err := GenerateJWT(user.ID)
 	if err != nil {
+		fmt.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
 	}
