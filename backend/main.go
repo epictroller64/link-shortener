@@ -29,7 +29,7 @@ func main() {
 	privateGroup.POST("/clicks/create", handlers.CreateClick)
 	privateGroup.GET("/links/get/:id", handlers.GetLink)
 	privateGroup.GET("/links/all", handlers.GetAllLinks)
-
+	privateGroup.GET("/links/recent", handlers.GetRecentLinks)
 	privateGroup.POST("/redirects/create", handlers.CreateRedirect)
 	privateGroup.GET("/redirects/get/:linkID", handlers.GetRedirectsByLinkID)
 	privateGroup.DELETE("/redirects/delete/:redirectID", handlers.DeleteRedirect)
