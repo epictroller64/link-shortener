@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type User struct {
@@ -38,6 +40,9 @@ func GetUserByEmail(email string) (*User, error) {
 	var user User
 	err := row.Scan(&user.ID, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt, &user.IpAddress, &user.UserAgent, &user.StripeCustomerID)
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
 		fmt.Println(err.Error())
 		return nil, err
 	}

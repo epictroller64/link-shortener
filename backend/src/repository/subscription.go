@@ -43,8 +43,8 @@ type Package struct {
 }
 
 type Billing struct {
-	Package      Package      `json:"package"`
-	Subscription Subscription `json:"subscription"`
+	Package      *Package      `json:"package"`
+	Subscription *Subscription `json:"subscription"`
 }
 
 func GetPackageByID(id string) (Package, error) {
