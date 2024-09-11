@@ -19,7 +19,9 @@ func main() {
 
 	router.POST("/api/auth/login", handlers.Login)
 	router.POST("/api/auth/register", handlers.Register)
+	router.GET("/api/auth/logout", handlers.Logout)
 
+	// Private routes for authenticated users only
 	privateGroup := router.Group("/api/")
 	privateGroup.Use(handlers.AuthMiddleware())
 	privateGroup.POST("/links/create", handlers.CreateLink)
