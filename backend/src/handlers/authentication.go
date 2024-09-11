@@ -26,7 +26,12 @@ type RegisterRequest struct {
 
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		user, err := ValidateSession(c)
+		sessionToken, err := c.Cookie("session_token")
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			return
+		}
+		user, err := ValidateSession(sessionToken)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 			c.Abort()
@@ -165,12 +170,7 @@ func Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Logout successful"})
 }
 
-func ValidateSession(c *gin.Context) (*repository.User, error) {
-	sessionToken, err := c.Cookie("session_token")
-	if err != nil {
-		return nil, err
-	}
-
+func ValidateSession(sessionToken string) (*repository.User, error) {
 	claims := &jwt.MapClaims{}
 	token, err := jwt.ParseWithClaims(sessionToken, claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(os.Getenv("JWT_SECRET")), nil
@@ -179,19 +179,31 @@ func ValidateSession(c *gin.Context) (*repository.User, error) {
 		return nil, errors.New("invalid token")
 	}
 
-	// Extract user_id from claims
 	userID, ok := (*claims)["user_id"].(string)
 	if !ok {
-		return nil, errors.New("invalid user_id in token")
-	}
-	user, err := repository.GetUserByID(userID)
-	if err != nil {
-		return nil, err
+		return nil, errors.New("invalid user id in token")
 	}
 
-	if user == nil {
+	user, err := repository.GetUserByID(userID)
+	if err != nil || user == nil {
 		return nil, errors.New("user not found")
 	}
 
 	return user, nil
+}
+
+func ValidateSessionHandler(c *gin.Context) {
+	sessionToken, err := c.Cookie("session_token")
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	user, err := ValidateSession(sessionToken)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Session is valid", "user": user})
 }

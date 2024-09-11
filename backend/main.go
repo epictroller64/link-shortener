@@ -20,6 +20,7 @@ func main() {
 	router.POST("/api/auth/login", handlers.Login)
 	router.POST("/api/auth/register", handlers.Register)
 	router.GET("/api/auth/logout", handlers.Logout)
+	router.GET("/api/auth/validate-session", handlers.ValidateSessionHandler)
 
 	// Private routes for authenticated users only
 	privateGroup := router.Group("/api/")
