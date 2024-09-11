@@ -104,6 +104,28 @@ type DeviceStatistics struct {
 	Count  int        `json:"count"`
 }
 
+type TotalStatsResponse struct {
+	TotalLinks  int `json:"totalLinks"`
+	TotalClicks int `json:"totalClicks"`
+}
+
+func GetTotalStats(userId string) (*TotalStatsResponse, error) {
+	query := `
+		SELECT COUNT(*) as total_links, SUM(clicks) as total_clicks
+		FROM links
+		WHERE created_by = $1
+	`
+
+	var totalLinkCount int
+	var totalClickCount int
+	err := Db.QueryRow(context.Background(), query, userId).Scan(&totalLinkCount, &totalClickCount)
+	if err != nil {
+		return nil, err
+	}
+
+	return &TotalStatsResponse{TotalLinks: totalLinkCount, TotalClicks: totalClickCount}, nil
+}
+
 func GetDailyStatistics(userId string, startDate time.Time, endDate time.Time) ([]DailyStatistics, error) {
 	query := `
 		SELECT DATE(clicks.created_at) as date, COUNT(*) as count

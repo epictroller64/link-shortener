@@ -131,6 +131,43 @@ func GetAllLinks() ([]Link, error) {
 	return links, nil
 }
 
+func GetRecentLinks(userID string) ([]Link, error) {
+	query := `
+		SELECT id, original, short, created_at, created_by, clicks, short_id
+		FROM links
+		WHERE created_by = $1
+		ORDER BY created_at DESC
+		LIMIT 10
+	`
+
+	var links []Link = make([]Link, 0)
+	rows, err := Db.Query(context.Background(), query, userID)
+	if err != nil {
+		return links, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var link Link
+		err := rows.Scan(
+			&link.ID,
+			&link.Original,
+			&link.Short,
+			&link.CreatedAt,
+			&link.CreatedBy,
+			&link.Clicks,
+			&link.ShortId,
+		)
+		if err != nil {
+			return links, err
+		}
+		links = append(links, link)
+	}
+
+	return links, nil
+
+}
+
 // UpdateLinkClickCount increments the click count for a specific link
 func UpdateLinkClickCount(linkID int) error {
 	query := `

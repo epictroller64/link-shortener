@@ -77,3 +77,14 @@ func GenerateShortLink() string {
 
 	return string(shortLink)
 }
+
+func GetRecentLinks(c *gin.Context) {
+	user := c.MustGet("user").(*repository.User)
+	allLinks, err := repository.GetRecentLinks(user.ID)
+	if err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, allLinks)
+}

@@ -20,6 +20,21 @@ type DailyStatisticsResponse struct {
 	EndDate   string `json:"endDate"`
 }
 
+type TotalStatsResponse struct {
+	TotalLinks  int `json:"totalLinks"`
+	TotalClicks int `json:"totalClicks"`
+}
+
+func GetTotalStats(c *gin.Context) {
+	user := c.MustGet("user").(*repository.User)
+	totalStats, err := repository.GetTotalStats(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, totalStats)
+}
+
 // GetDailyStatistics returns the number of clicks for each day in the given date range. This is targeting whole account
 func GetDailyStatistics(c *gin.Context) {
 	user := c.MustGet("user").(*repository.User)
