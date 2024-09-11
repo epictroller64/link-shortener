@@ -14,13 +14,13 @@ type User struct {
 	UpdatedAt        time.Time `json:"updatedAt"`
 	IpAddress        string    `json:"ipAddress"`
 	UserAgent        string    `json:"userAgent"`
-	StripeCustomerID string    `json:"stripeCustomerID"`
+	StripeCustomerID *string   `json:"stripeCustomerID"`
 }
 
 func CreateUser(user User) error {
 	query := `
 		INSERT INTO users (email, password, created_at, updated_at, ip_address, user_agent, stripe_customer_id)
-		VALUES ($1, $2, $3, $4, $5, $6, "")
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
 	_, err := Db.Exec(context.Background(), query, user.Email, user.Password, user.CreatedAt, user.UpdatedAt, user.IpAddress, user.UserAgent, user.StripeCustomerID)
 	if err != nil {

@@ -57,12 +57,13 @@ func Register(c *gin.Context) {
 		return
 	}
 	user = &repository.User{
-		Email:     request.Email,
-		Password:  hashedPassword,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		IpAddress: c.ClientIP(),
-		UserAgent: c.Request.UserAgent(),
+		Email:            request.Email,
+		Password:         hashedPassword,
+		CreatedAt:        time.Now(),
+		UpdatedAt:        time.Now(),
+		IpAddress:        c.ClientIP(),
+		UserAgent:        c.Request.UserAgent(),
+		StripeCustomerID: nil,
 	}
 	err = repository.CreateUser(*user)
 	if err != nil {
@@ -88,6 +89,7 @@ func HashPassword(password string) (string, error) {
 }
 
 func VerifyPassword(hashedPassword, password string) bool {
+	fmt.Println(hashedPassword, password)
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 	return err == nil
 }
@@ -128,8 +130,12 @@ func Login(c *gin.Context) {
 	}
 
 	user, _ := repository.GetUserByEmail(request.Email)
+	if user == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "No such user found"})
+		return
+	}
 
-	if user == nil || !VerifyPassword(user.Password, request.Password) {
+	if !VerifyPassword(user.Password, request.Password) {
 		fmt.Println("Invalid credentials")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return

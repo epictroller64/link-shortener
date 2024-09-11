@@ -9,7 +9,7 @@ import (
 
 func GetBilling(c *gin.Context) {
 	user := c.MustGet("user").(*repository.User)
-	subscription, err := repository.GetSubscriptionByCustomerId(user.StripeCustomerID)
+	subscription, err := repository.GetSubscriptionByCustomerId(*user.StripeCustomerID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
