@@ -126,6 +126,7 @@ func GetTotalStats(userId string) (*TotalStatsResponse, error) {
 	return &TotalStatsResponse{TotalLinks: totalLinkCount, TotalClicks: totalClickCount}, nil
 }
 
+// Daily statistics for the whole account, grouped by day
 func GetDailyStatistics(userId string, startDate time.Time, endDate time.Time) ([]DailyStatistics, error) {
 	query := `
 		SELECT DATE(clicks.created_at) as date, COUNT(*) as count
@@ -158,39 +159,32 @@ func GetDailyStatistics(userId string, startDate time.Time, endDate time.Time) (
 	return dailyStatistics, nil
 }
 
-func GetClicksByDateRange(linkId string, startDate time.Time, endDate time.Time) ([]Click, error) {
+func GetClicksByDateRange(linkId string, startDate time.Time, endDate time.Time) ([]DailyStatistics, error) {
 	query := `
-		SELECT id, link_id, created_at, user_agent, referer, ip, country
+		SELECT DATE(created_at) as date, COUNT(*) as count
 		FROM clicks
 		WHERE link_id = $1 AND created_at BETWEEN $2 AND $3
+		GROUP BY DATE(created_at)
+		ORDER BY date
 	`
 
-	var clicks []Click = make([]Click, 0)
 	rows, err := Db.Query(context.Background(), query, linkId, startDate, endDate)
 	if err != nil {
-		return clicks, err
+		return nil, err
 	}
 	defer rows.Close()
 
+	var dailyClicks []DailyStatistics
 	for rows.Next() {
-		var click Click
-		err := rows.Scan(
-			&click.ID,
-			&click.LinkID,
-			&click.CreatedAt,
-			&click.UserAgent,
-			&click.Referer,
-			&click.IP,
-			&click.Country,
-		)
+		var clickCount DailyStatistics
+		err := rows.Scan(&clickCount.Date, &clickCount.Count)
 		if err != nil {
-			return clicks, err
+			return nil, err
 		}
-		clicks = append(clicks, click)
+		dailyClicks = append(dailyClicks, clickCount)
 	}
 
-	return clicks, nil
-
+	return dailyClicks, nil
 }
 
 func GetDeviceStatistics(userId string, linkId string, startDate time.Time, endDate time.Time) ([]DeviceStatistics, error) {

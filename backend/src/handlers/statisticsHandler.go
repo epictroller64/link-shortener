@@ -46,7 +46,6 @@ func GetDailyStatistics(c *gin.Context) {
 	// Parse the date strings into time.Time
 	startDate, err := time.Parse(time.RFC3339, request.StartDate)
 	if err != nil {
-		fmt.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid start date format"})
 		return
 	}
@@ -70,6 +69,8 @@ func GetDailyStatistics(c *gin.Context) {
 
 // GetStatistics returns the number of clicks for each day in the given date range. This is targeting specific link
 func GetStatistics(c *gin.Context) {
+	user := c.MustGet("user").(*repository.User)
+	// Check whether user owns this link at all
 	var request StatisticsRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -89,6 +90,21 @@ func GetStatistics(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end date format"})
 		return
 	}
+
+	link, err := repository.GetLink(request.LinkId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if link == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Link not found"})
+		return
+	}
+	if link.CreatedBy != user.ID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have access to this link"})
+		return
+	}
+
 	fmt.Println(startDate, endDate)
 	clicks, err := repository.GetClicksByDateRange(request.LinkId, startDate, endDate)
 	if err != nil {

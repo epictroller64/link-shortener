@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type Link struct {
@@ -48,7 +50,7 @@ func CreateLink(link Link) (Link, error) {
 	return link, nil
 }
 
-func GetLinkByShortId(shortId string) (Link, error) {
+func GetLinkByShortId(shortId string) (*Link, error) {
 	query := `
 		SELECT id, original, short, created_at, created_by, clicks, short_id
 		FROM links
@@ -67,13 +69,16 @@ func GetLinkByShortId(shortId string) (Link, error) {
 	)
 
 	if err != nil {
-		return Link{}, err
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
 	}
 
-	return link, nil
+	return &link, nil
 }
 
-func GetLink(id string) (Link, error) {
+func GetLink(id string) (*Link, error) {
 	query := `
 		SELECT id, original, short, created_at, created_by, clicks, short_id
 		FROM links
@@ -92,10 +97,13 @@ func GetLink(id string) (Link, error) {
 	)
 
 	if err != nil {
-		return Link{}, err
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
 	}
 
-	return link, nil
+	return &link, nil
 }
 
 func GetAllLinks() ([]Link, error) {
