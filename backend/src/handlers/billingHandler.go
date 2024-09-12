@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"link-shortener-backend/src/repository"
 	"net/http"
 
@@ -49,4 +50,14 @@ func GetBilling(c *gin.Context) {
 func GetAccountDetails(c *gin.Context) {
 	user := c.MustGet("user").(*repository.User)
 	c.JSON(http.StatusOK, user)
+}
+
+func GetPackages(c *gin.Context) {
+	packages, err := repository.GetPackages()
+	if err != nil {
+		fmt.Println("Error getting packages: ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, packages)
 }

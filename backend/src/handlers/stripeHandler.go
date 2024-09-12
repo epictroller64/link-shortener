@@ -17,25 +17,38 @@ import (
 	"github.com/stripe/stripe-go/webhook"
 )
 
-func init() {
-	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
-}
-
 var (
 	ErrSubscriptionExists = errors.New("subscription already exists")
 )
 
 type StripeCheckoutSession struct {
-	Price    string `json:"price"`
-	Quantity int64  `json:"quantity"`
+	PackageID string `json:"packageId"`
 }
 
 func StripeCreateCheckoutSession(c *gin.Context) {
 
+	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
 	var checkoutSessionBody StripeCheckoutSession
 	err := c.BindJSON(&checkoutSessionBody)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if checkoutSessionBody.PackageID == "" {
+
+		c.JSON(http.StatusBadRequest, gin.H{"error": "price is required"})
+		return
+	}
+
+	// pull the package from database
+	pricingPackage, err := repository.GetPackageByID(checkoutSessionBody.PackageID)
+	if err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if pricingPackage.PriceID == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "price id is required"})
 		return
 	}
 
@@ -43,8 +56,8 @@ func StripeCreateCheckoutSession(c *gin.Context) {
 		PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
 		LineItems: []*stripe.CheckoutSessionLineItemParams{
 			{
-				Price:    stripe.String(checkoutSessionBody.Price),
-				Quantity: stripe.Int64(checkoutSessionBody.Quantity),
+				Price:    stripe.String(pricingPackage.PriceID),
+				Quantity: stripe.Int64(1),
 			},
 		},
 		Mode:       stripe.String(string(stripe.CheckoutSessionModeSubscription)),
@@ -58,7 +71,7 @@ func StripeCreateCheckoutSession(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.Redirect(http.StatusSeeOther, checkoutSession.URL)
+	c.JSON(http.StatusOK, gin.H{"url": checkoutSession.URL})
 }
 func StripeSuccess(c *gin.Context) {
 	fmt.Println("Success")

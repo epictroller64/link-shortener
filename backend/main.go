@@ -34,7 +34,6 @@ func main() {
 	privateGroup.GET("/redirects/get/:linkID", handlers.GetRedirectsByLinkID)
 	privateGroup.DELETE("/redirects/delete/:redirectID", handlers.DeleteRedirect)
 	privateGroup.PUT("/redirects/update/:redirectID", handlers.UpdateRedirect)
-
 	privateGroup.POST("/analytics/get", handlers.GetStatistics)
 	privateGroup.POST("/analytics/daily", handlers.GetDailyStatistics)
 	privateGroup.POST("/analytics/device", handlers.GetDeviceStatistics)
@@ -47,6 +46,7 @@ func main() {
 	router.POST("/api/stripe/webhook", handlers.StripeWebHook)
 	router.GET("/api/stripe/sync", handlers.StripeSubscriptionSync)
 	router.GET("/:shortId", handlers.Redirect)
+	router.GET("/api/packages/get", handlers.GetPackages)
 
 	repository.InitDatabase()
 	router.Run(":8080")

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -32,14 +33,16 @@ type Subscription struct {
 
 // Package is a struct that represents a package that a user can subscribe to, no more then 3 needed
 type Package struct {
-	ID            string `json:"id"`
-	Name          string `json:"name"`
-	Description   string `json:"description"`
-	Price         int    `json:"price"`
-	MaxLinks      int    `json:"maxLinks"`
-	MaxClicks     int    `json:"maxClicks"`
-	CustomDomains int    `json:"customDomains"` // Will add this later if ever
-	IsDefault     bool   `json:"isDefault"`
+	ID            string   `json:"id"`
+	Name          string   `json:"name"`
+	Description   string   `json:"description"`
+	Price         int      `json:"price"`
+	MaxLinks      int      `json:"maxLinks"`
+	MaxClicks     int      `json:"maxClicks"`
+	CustomDomains int      `json:"customDomains"` // Will add this later if ever
+	IsDefault     bool     `json:"isDefault"`
+	Features      []string `json:"features"`
+	PriceID       string   `json:"priceId"` // stripe price id
 }
 
 type Billing struct {
@@ -47,7 +50,8 @@ type Billing struct {
 	Subscription *Subscription `json:"subscription"`
 }
 
-func GetPackageByID(id string) (Package, error) {
+// GetPackageByID gets a package by id
+func GetPackageByID(id string) (*Package, error) {
 	query := `
 		SELECT * FROM packages WHERE id = $1
 	`
@@ -55,14 +59,19 @@ func GetPackageByID(id string) (Package, error) {
 	row := Db.QueryRow(context.Background(), query, id)
 
 	var subPackage Package
-	err := row.Scan(&subPackage.ID, &subPackage.Name, &subPackage.Description, &subPackage.Price, &subPackage.MaxLinks, &subPackage.MaxClicks, &subPackage.CustomDomains, &subPackage.IsDefault)
+	var featuresJson string
+	err := row.Scan(&subPackage.ID, &subPackage.Name, &subPackage.Description, &subPackage.Price, &subPackage.MaxLinks, &subPackage.MaxClicks, &subPackage.CustomDomains, &subPackage.IsDefault, &featuresJson, &subPackage.PriceID)
 	if err == pgx.ErrNoRows {
-		return Package{}, nil
+		return nil, nil
 	}
 	if err != nil {
-		return Package{}, err
+		return nil, err
 	}
-	return subPackage, nil
+	err = json.Unmarshal([]byte(featuresJson), &subPackage.Features)
+	if err != nil {
+		return nil, err
+	}
+	return &subPackage, nil
 }
 
 func GetPackages() ([]Package, error) {
@@ -79,7 +88,12 @@ func GetPackages() ([]Package, error) {
 	var packages []Package
 	for rows.Next() {
 		var subPackage Package
-		err := rows.Scan(&subPackage.ID, &subPackage.Name, &subPackage.Description, &subPackage.Price, &subPackage.MaxLinks, &subPackage.MaxClicks, &subPackage.CustomDomains, &subPackage.IsDefault)
+		var featuresJson string
+		err := rows.Scan(&subPackage.ID, &subPackage.Name, &subPackage.Description, &subPackage.Price, &subPackage.MaxLinks, &subPackage.MaxClicks, &subPackage.CustomDomains, &subPackage.IsDefault, &featuresJson, &subPackage.PriceID)
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal([]byte(featuresJson), &subPackage.Features)
 		if err != nil {
 			return nil, err
 		}
