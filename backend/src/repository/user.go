@@ -19,16 +19,17 @@ type User struct {
 	StripeCustomerID *string   `json:"stripeCustomerID"`
 }
 
-func CreateUser(user User) error {
+func CreateUser(user User) (string, error) {
 	query := `
 		INSERT INTO users (email, password, created_at, updated_at, ip_address, user_agent, stripe_customer_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id
 	`
-	_, err := Db.Exec(context.Background(), query, user.Email, user.Password, user.CreatedAt, user.UpdatedAt, user.IpAddress, user.UserAgent, user.StripeCustomerID)
+	var id string
+	err := Db.QueryRow(context.Background(), query, user.Email, user.Password, user.CreatedAt, user.UpdatedAt, user.IpAddress, user.UserAgent, user.StripeCustomerID).Scan(&id)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	return id, nil
 }
 
 func GetUserByEmail(email string) (*User, error) {

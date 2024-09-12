@@ -70,13 +70,13 @@ func Register(c *gin.Context) {
 		UserAgent:        c.Request.UserAgent(),
 		StripeCustomerID: nil,
 	}
-	err = repository.CreateUser(*user)
+	userId, err := repository.CreateUser(*user)
 	if err != nil {
 		fmt.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	token, err := GenerateJWT(user.ID)
+	token, err := GenerateJWT(userId)
 	if err != nil {
 		fmt.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -195,12 +195,14 @@ func ValidateSession(sessionToken string) (*repository.User, error) {
 func ValidateSessionHandler(c *gin.Context) {
 	sessionToken, err := c.Cookie("session_token")
 	if err != nil {
+		fmt.Println(err.Error())
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
 	user, err := ValidateSession(sessionToken)
 	if err != nil {
+		fmt.Println(err.Error())
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
