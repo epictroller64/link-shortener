@@ -55,8 +55,10 @@ func GetLink(c *gin.Context) {
 	c.JSON(http.StatusOK, link)
 }
 
+// GetAllLinks gets all links for the user
 func GetAllLinks(c *gin.Context) {
-	links, err := repository.GetAllLinks()
+	user := c.MustGet("user").(*repository.User)
+	links, err := repository.GetAllLinks(user.ID)
 	if err != nil {
 		fmt.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

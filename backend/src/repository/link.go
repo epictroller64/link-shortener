@@ -106,14 +106,17 @@ func GetLink(id string) (*Link, error) {
 	return &link, nil
 }
 
-func GetAllLinks() ([]Link, error) {
+func GetAllLinks(userID string) ([]Link, error) {
 	query := `
 		SELECT id, original, short, created_at, created_by, clicks, short_id
-		FROM links ORDER BY id DESC
+		FROM links
+		WHERE created_by = $1
+		ORDER BY id DESC
 	`
 
 	var links []Link = make([]Link, 0)
-	rows, err := Db.Query(context.Background(), query)
+	rows, err := Db.Query(context.Background(), query, userID)
+
 	if err != nil {
 		return links, err
 	}
