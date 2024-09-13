@@ -90,3 +90,14 @@ func GetRecentLinks(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, allLinks)
 }
+
+func DeleteLink(c *gin.Context) {
+	user := c.MustGet("user").(*repository.User)
+	err := repository.DeleteLink(c.Param("id"), user.ID)
+	if err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Link deleted successfully"})
+}

@@ -50,6 +50,20 @@ func CreateLink(link Link) (Link, error) {
 	return link, nil
 }
 
+func DeleteLink(id string, userID string) error {
+	query := `
+		DELETE FROM links
+		WHERE id = $1 AND created_by = $2
+	`
+
+	_, err := Db.Exec(context.Background(), query, id, userID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func GetLinkByShortId(shortId string) (*Link, error) {
 	query := `
 		SELECT id, original, short, created_at, created_by, clicks, short_id
