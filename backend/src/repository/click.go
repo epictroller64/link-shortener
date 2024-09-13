@@ -222,3 +222,79 @@ func parseUserAgent(userAgentString string) DeviceType {
 
 	return DeviceTypeDesktop
 }
+
+type RefererStatistics struct {
+	Referer string `json:"referer"`
+	Count   int    `json:"count"`
+}
+
+func GetRefererStatistics(linkId string, startDate time.Time, endDate time.Time) ([]RefererStatistics, error) {
+	query := `
+		SELECT referer, COUNT(*) as count
+		FROM clicks
+		WHERE link_id = $1 AND created_at BETWEEN $2 AND $3
+		GROUP BY referer
+		ORDER BY count DESC
+	`
+
+	rows, err := Db.Query(context.Background(), query, linkId, startDate, endDate)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return make([]RefererStatistics, 0), nil
+		}
+		return nil, err
+	}
+	defer rows.Close()
+
+	var refererStatistics []RefererStatistics = make([]RefererStatistics, 0)
+	for rows.Next() {
+		var referer string
+		var count int
+		err := rows.Scan(&referer, &count)
+		if err != nil {
+			return nil, err
+		}
+		refererStatistics = append(refererStatistics, RefererStatistics{Referer: referer, Count: count})
+	}
+
+	return refererStatistics, nil
+}
+
+type IpStatistics struct {
+	Ip    string `json:"ip"`
+	Count int    `json:"count"`
+}
+
+func GetIpStatistics(linkId string, startDate time.Time, endDate time.Time) ([]IpStatistics, error) {
+	query := `
+		SELECT ip, COUNT(*) as count
+		FROM clicks
+		WHERE link_id = $1 AND created_at BETWEEN $2 AND $3
+		GROUP BY ip
+		ORDER BY count DESC
+	`
+
+	rows, err := Db.Query(context.Background(), query, linkId, startDate, endDate)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return make([]IpStatistics, 0), nil
+		}
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ipStatistics []IpStatistics = make([]IpStatistics, 0)
+
+	for rows.Next() {
+		var ip string
+		var count int
+		err := rows.Scan(&ip, &count)
+		if err != nil {
+			return make([]IpStatistics, 0), err
+		}
+		ipStatistics = append(ipStatistics, IpStatistics{Ip: ip, Count: count})
+	}
+
+	return ipStatistics, nil
+
+}

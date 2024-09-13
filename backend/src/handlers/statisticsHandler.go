@@ -147,3 +147,76 @@ func ParseDates(startDate string, endDate string) (time.Time, time.Time, error) 
 	}
 	return start, end, nil
 }
+
+func GetRefererStatistics(c *gin.Context) {
+	user := c.MustGet("user").(*repository.User)
+	var request StatisticsRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	fmt.Println(request)
+	start, end, err := ParseDates(request.StartDate, request.EndDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	isOwned, err := CheckLinkOwnership(request.LinkId, user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if !isOwned {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have access to this link"})
+		return
+	}
+	stats, err := repository.GetRefererStatistics(request.LinkId, start, end)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, stats)
+}
+
+func GetIpStatistics(c *gin.Context) {
+	user := c.MustGet("user").(*repository.User)
+	var request StatisticsRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	isOwned, err := CheckLinkOwnership(request.LinkId, user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if !isOwned {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have access to this link"})
+		return
+	}
+	start, end, err := ParseDates(request.StartDate, request.EndDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	stats, err := repository.GetIpStatistics(request.LinkId, start, end)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, stats)
+}
+
+func CheckLinkOwnership(linkId string, user *repository.User) (bool, error) {
+	link, err := repository.GetLink(linkId)
+	if err != nil {
+		return false, err
+	}
+	if link == nil {
+		return false, nil
+	}
+	if link.CreatedBy != user.ID {
+		return false, nil
+	}
+	return true, nil
+}

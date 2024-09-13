@@ -38,6 +38,8 @@ func main() {
 	privateGroup.POST("/analytics/get", handlers.GetStatistics)
 	privateGroup.POST("/analytics/daily", handlers.GetDailyStatistics)
 	privateGroup.POST("/analytics/device", handlers.GetDeviceStatistics)
+	privateGroup.POST("/analytics/ip", handlers.GetIpStatistics)
+	privateGroup.POST("/analytics/referer", handlers.GetRefererStatistics)
 	privateGroup.GET("/analytics/total", handlers.GetTotalStats)
 	// This handles everything related to the shortened link
 	privateGroup.POST("/stripe/create-checkout-session", handlers.StripeCreateCheckoutSession)
