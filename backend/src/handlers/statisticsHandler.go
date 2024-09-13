@@ -29,6 +29,7 @@ func GetTotalStats(c *gin.Context) {
 	user := c.MustGet("user").(*repository.User)
 	totalStats, err := repository.GetTotalStats(user.ID)
 	if err != nil {
+		fmt.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

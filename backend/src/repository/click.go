@@ -111,7 +111,7 @@ type TotalStatsResponse struct {
 
 func GetTotalStats(userId string) (*TotalStatsResponse, error) {
 	query := `
-		SELECT COUNT(*) as total_links, SUM(clicks) as total_clicks
+		SELECT COUNT(*) as total_links, COALESCE(SUM(clicks), 0) as total_clicks
 		FROM links
 		WHERE created_by = $1
 	`
@@ -138,20 +138,20 @@ func GetDailyStatistics(userId string, startDate time.Time, endDate time.Time) (
 	`
 
 	rows, err := Db.Query(context.Background(), query, userId, startDate, endDate)
+	var dailyStatistics []DailyStatistics = make([]DailyStatistics, 0)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return []DailyStatistics{}, nil
+			return dailyStatistics, nil
 		}
 		return nil, err
 	}
 	defer rows.Close()
 
-	var dailyStatistics []DailyStatistics
 	for rows.Next() {
 		var stat DailyStatistics
 		err := rows.Scan(&stat.Date, &stat.Count)
 		if err != nil {
-			return nil, err
+			return make([]DailyStatistics, 0), err
 		}
 		dailyStatistics = append(dailyStatistics, stat)
 	}
